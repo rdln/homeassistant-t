@@ -41,6 +41,7 @@ trigger:
     device_id: !input button_device
     domain: zha
     type: remote_button_short_press
+    subtype: remote_button_short_press
     id: short_press
 
   # Long press
@@ -48,6 +49,7 @@ trigger:
     device_id: !input button_device
     domain: zha
     type: remote_button_long_press
+    subtype: remote_button_long_press
     id: long_press
 
 condition: []
