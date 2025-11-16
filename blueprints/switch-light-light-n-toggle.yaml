@@ -45,7 +45,7 @@ trigger:
     device_id: !input button_device
     domain: zha
     type: remote_button_short_press
-    subtype: button_1
+    subtype: remote_button_short_press
 
 condition: []
 
