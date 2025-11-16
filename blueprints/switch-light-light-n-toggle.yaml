@@ -1,5 +1,5 @@
 ﻿blueprint:
-  name: Ceiling light with night mode - toggle & long-press override
+  name: Ceiling light with night mode - toggle & long-press override v3
   description: >
     Short press toggles normal or night light depending on night_sensor state.
     Long press forces the opposite light on.
