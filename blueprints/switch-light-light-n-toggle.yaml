@@ -1,0 +1,9 @@
+﻿blueprint:
+  name: Switch light light n toggle
+  description: Switch light light n toggle
+  domain: automation
+  input:
+    press_button:
+    light:
+    night_light:
+    light_mode:
