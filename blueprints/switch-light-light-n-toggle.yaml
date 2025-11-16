@@ -48,8 +48,8 @@ trigger:
   - platform: device
     device_id: !input button_device
     domain: zha
-    type: remote_button_long_press
-    subtype: remote_button_long_press
+    type: remote_button_double_press
+    subtype: remote_button_double_press
     id: long_press
 
 condition: []
