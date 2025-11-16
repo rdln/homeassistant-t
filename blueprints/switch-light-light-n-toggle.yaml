@@ -1,8 +1,9 @@
 ﻿blueprint:
-  name: Ceiling light with night mode - button control
+  name: Ceiling light with night mode - toggle & long-press override
   description: >
-    Control a ceiling light with normal and night mode using a single button.
-    Press cycles through: Off → Normal → Nightlight → Off.
+    Short press toggles normal or night light depending on night_sensor state.
+    Long press forces the opposite light on.
+
   domain: automation
 
   input:
@@ -14,7 +15,6 @@
 
     normal_light:
       name: Normal light entity
-      description: The main/normal light entity of the ceiling light
       selector:
         entity:
           domain:
@@ -23,7 +23,6 @@
 
     night_light:
       name: Nightlight entity
-      description: The nightlight entity of the ceiling light
       selector:
         entity:
           domain:
@@ -32,72 +31,90 @@
 
     night_sensor:
       name: Nightlight status sensor
-      description: Binary sensor that indicates if the nightlight is currently ON (true/on) or OFF (false/off)
       selector:
         entity:
           domain: binary_sensor
 
 trigger:
-  # ⚠️ This example uses a ZHA short press on button_1.
-  # If your button uses a different integration (deCONZ, Zigbee2MQTT, etc.),
-  # adjust this trigger to match your button's short-press event.
+  # Short press
   - platform: device
     device_id: !input button_device
     domain: zha
     type: remote_button_short_press
-    subtype: remote_button_short_press
+    #subtype: button_1
+    id: short_press
+
+  # Long press
+  - platform: device
+    device_id: !input button_device
+    domain: zha
+    type: remote_button_long_press
+    #subtype: button_1
+    id: long_press
 
 condition: []
 
 action:
   - variables:
-      normal_entity: !input normal_light
-      night_entity: !input night_light
-      night_sensor_entity: !input night_sensor
+      normal: !input normal_light
+      night: !input night_light
+      night_state: "{{ states( (input_night := inputs['night_sensor']) ) }}"
 
   - choose:
-      # 1) Everything is OFF → turn Normal ON
+      # ----------------------
+      # Short press behavior
+      # ----------------------
       - conditions:
-          - condition: state
-            entity_id: !input night_sensor
-            state: "off"
-          - condition: state
-            entity_id: !input normal_light
-            state: "off"
-          - condition: state
-            entity_id: !input night_light
-            state: "off"
+          - condition: trigger
+            id: short_press
         sequence:
-          - service: homeassistant.turn_on
-            target:
-              entity_id: !input normal_light
+          - choose:
+              # Night sensor OFF → toggle NORMAL
+              - conditions:
+                  - condition: state
+                    entity_id: !input night_sensor
+                    state: "off"
+                sequence:
+                  - service: homeassistant.toggle
+                    target:
+                      entity_id: !input normal_light
 
-      # 2) Normal is ON (night OFF) → switch to Night mode
-      - conditions:
-          - condition: state
-            entity_id: !input night_sensor
-            state: "off"
-          - condition: state
-            entity_id: !input normal_light
-            state: "on"
-        sequence:
-          - service: homeassistant.turn_off
-            target:
-              entity_id: !input normal_light
-          - service: homeassistant.turn_on
-            target:
-              entity_id: !input night_light
+              # Night sensor ON → toggle NIGHT LIGHT
+              - conditions:
+                  - condition: state
+                    entity_id: !input night_sensor
+                    state: "on"
+                sequence:
+                  - service: homeassistant.toggle
+                    target:
+                      entity_id: !input night_light
 
-      # 3) Night mode is ON → turn everything OFF
+      # ----------------------
+      # Long press behavior
+      # ----------------------
       - conditions:
-          - condition: state
-            entity_id: !input night_sensor
-            state: "on"
+          - condition: trigger
+            id: long_press
         sequence:
-          - service: homeassistant.turn_off
-            target:
-              entity_id:
-                - !input normal_light
-                - !input night_light
+          - choose:
+              # Night OFF → force NIGHT LIGHT ON
+              - conditions:
+                  - condition: state
+                    entity_id: !input night_sensor
+                    state: "off"
+                sequence:
+                  - service: homeassistant.turn_on
+                    target:
+                      entity_id: !input night_light
+
+              # Night ON → force NORMAL LIGHT ON
+              - conditions:
+                  - condition: state
+                    entity_id: !input night_sensor
+                    state: "on"
+                sequence:
+                  - service: homeassistant.turn_on
+                    target:
+                      entity_id: !input normal_light
 
 mode: restart
