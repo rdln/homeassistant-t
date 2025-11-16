@@ -1,6 +1,5 @@
 ﻿blueprint:
-  id: ceiling_light_toggle_night_mode_v3
-  name: Ceiling light with night mode - toggle & long-press override v3
+  name: Ceiling light with night mode - toggle & long-press override
   description: >
     Short press toggles normal or night light depending on night_sensor state.
     Long press forces the opposite light on.
@@ -42,7 +41,6 @@ trigger:
     device_id: !input button_device
     domain: zha
     type: remote_button_short_press
-    #subtype: button_1
     id: short_press
 
   # Long press
@@ -50,17 +48,11 @@ trigger:
     device_id: !input button_device
     domain: zha
     type: remote_button_long_press
-    #subtype: button_1
     id: long_press
 
 condition: []
 
 action:
-  - variables:
-      normal: !input normal_light
-      night: !input night_light
-      night_state: "{{ states( (input_night := inputs['night_sensor']) ) }}"
-
   - choose:
       # ----------------------
       # Short press behavior
@@ -70,7 +62,7 @@ action:
             id: short_press
         sequence:
           - choose:
-              # Night sensor OFF → toggle NORMAL
+              # Night sensor OFF → toggle NORMAL light
               - conditions:
                   - condition: state
                     entity_id: !input night_sensor
@@ -80,7 +72,7 @@ action:
                     target:
                       entity_id: !input normal_light
 
-              # Night sensor ON → toggle NIGHT LIGHT
+              # Night sensor ON → toggle NIGHT light
               - conditions:
                   - condition: state
                     entity_id: !input night_sensor
@@ -98,7 +90,7 @@ action:
             id: long_press
         sequence:
           - choose:
-              # Night OFF → force NIGHT LIGHT ON
+              # Night sensor OFF → turn NIGHT light ON
               - conditions:
                   - condition: state
                     entity_id: !input night_sensor
@@ -108,7 +100,7 @@ action:
                     target:
                       entity_id: !input night_light
 
-              # Night ON → force NORMAL LIGHT ON
+              # Night sensor ON → turn NORMAL light ON
               - conditions:
                   - condition: state
                     entity_id: !input night_sensor
