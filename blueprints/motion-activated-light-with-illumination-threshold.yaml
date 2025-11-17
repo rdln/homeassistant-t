@@ -52,12 +52,6 @@
           unit_of_measurement: lx
           mode: slider
 
-    #    light_target:
-    #      name: Light
-    #      selector:
-    #        target:
-    #          entity:
-    #            domain: light
     no_motion_wait:
       name: Wait time
       description: Time to leave the light on after last motion is detected.
@@ -93,8 +87,8 @@ conditions:
 
 actions:
   - alias: "Turn on the light"
-    action: light.turn_on
-    target: !input light_target
+#    action: light.turn_on
+#    target: !input light_target
     choose:
       # Night mode active → turn on night light
       - conditions:
@@ -122,10 +116,10 @@ actions:
     #      to: "off"
     wait_for_trigger:
       - platform: state
-        entity_id: !input motion_sensor
+        entity_id: !input motion_entity
         to: "off"
         for:
-          seconds: !input off_delay
+          seconds: !input no_motion_wait
   - alias: "Turn off the light"
     action: light.turn_off
     target: !input normal_light
