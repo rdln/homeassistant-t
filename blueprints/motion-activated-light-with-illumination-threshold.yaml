@@ -120,9 +120,9 @@ actions:
         to: "off"
         for:
           seconds: !input no_motion_wait
-  - alias: "Turn off the light"
-    action: light.turn_off
-    target: !input normal_light
-  - alias: "Turn off the light"
-    action: light.turn_off
-    target: !input night_light
+  - alias: "Turn off the lights"
+    service: homeassistant.turn_off
+    target:
+      entity_id:
+        - !input normal_light
+        - !input night_light
