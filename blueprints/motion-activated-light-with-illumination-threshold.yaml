@@ -1,0 +1,134 @@
+﻿blueprint:
+  name: Motion-activated Light With Illumination Threshold
+  description: Turn on a light when motion is detected and illumination is lower than specified threshold.
+  domain: automation
+
+  input:
+    motion_entity:
+      name: Motion Sensor
+      selector:
+        entity:
+          filter:
+            - device_class: occupancy
+              domain: binary_sensor
+            - device_class: motion
+              domain: binary_sensor
+    normal_light:
+      name: Normal light entity
+      selector:
+        entity:
+          domain:
+            - light
+            - switch
+
+    night_light:
+      name: Nightlight entity
+      selector:
+        entity:
+          domain:
+            - light
+            - switch
+
+    night_sensor:
+      name: Nightlight status sensor
+      selector:
+        entity:
+          domain: binary_sensor
+
+    illumination_sensor:
+      name: Illumination sensor
+      selector:
+        entity:
+          domain: sensor
+
+    illumination_threshold:
+      name: Illumination threshold
+      description: Light will be turned on when illumination is lower than this value. (lx)
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 1000
+          unit_of_measurement: lx
+          mode: slider
+
+    #    light_target:
+    #      name: Light
+    #      selector:
+    #        target:
+    #          entity:
+    #            domain: light
+    no_motion_wait:
+      name: Wait time
+      description: Time to leave the light on after last motion is detected.
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+          mode: box
+
+# If motion is detected within the delay,
+# we restart the script.
+mode: restart
+max_exceeded: silent
+
+triggers:
+  trigger: state
+  entity_id: !input motion_entity
+  from: "off"
+  to: "on"
+
+conditions:
+  - condition: numeric_state
+    entity_id: !input illumination_sensor
+    below: !input illumination_threshold
+  - condition: state
+    entity_id: !input normal_light
+    state: "off"
+  - condition: state
+    entity_id: !input night_light
+    state: "off"
+
+actions:
+  - alias: "Turn on the light"
+    action: light.turn_on
+    target: !input light_target
+    choose:
+      # Night mode active → turn on night light
+      - conditions:
+          - condition: state
+            entity_id: !input night_sensor
+            state: "on"
+        sequence:
+          - service: homeassistant.turn_on
+            target:
+              entity_id: !input night_light
+      # Night mode inactive → turn on normal light
+      - conditions:
+          - condition: state
+            entity_id: !input night_sensor
+            state: "off"
+        sequence:
+          - service: homeassistant.turn_on
+            target:
+              entity_id: !input normal_light
+  - alias: "Wait until there is no motion from device"
+    #    wait_for_trigger:
+    #      trigger: state
+    #      entity_id: !input motion_entity
+    #      from: "on"
+    #      to: "off"
+    wait_for_trigger:
+      - platform: state
+        entity_id: !input motion_sensor
+        to: "off"
+        for:
+          seconds: !input off_delay
+  - alias: "Turn off the light"
+    action: light.turn_off
+    target: !input normal_light
+  - alias: "Turn off the light"
+    action: light.turn_off
+    target: !input night_light
